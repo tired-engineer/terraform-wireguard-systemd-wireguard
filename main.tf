@@ -217,6 +217,8 @@ resource "null_resource" "keys" {
       "set -o errexit", # https://github.com/hashicorp/terraform/issues/27554
       "chmod 0640 '${local.keyfile}'",
       "chown root:systemd-network '${local.keyfile}'",
+      "chown root:systemd-network \"$(dirname '${local.keyfile}')\"",
+      "chmod 750 \"$(dirname '${local.keyfile}')\"",
       "chmod 0644 '${local.pubfile}'",
     ]
   }
