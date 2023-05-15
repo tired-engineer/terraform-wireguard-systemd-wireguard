@@ -266,7 +266,7 @@ resource "null_resource" "peers" {
     %{if !each.value.egress && peer.egress}
       AllowedIPs=0.0.0.0/0,::/0
     %{else}
-      AllowedIPs=${peer.internal_ip}/32
+      AllowedIPs=${peer.internal_ip}/${var.mesh_prefix}
     %{endif}
 
     %{endfor}
