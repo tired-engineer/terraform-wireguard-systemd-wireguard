@@ -5,6 +5,8 @@ locals {
   keyfile = var.key_filename != null ? var.key_filename : "/etc/wireguard/${var.interface}.key"
   pubfile = "${local.keyfile}.pub"
 
+  site_ips = toset(flatten([for peer in var.mesh_peers : peer.site_ips]))
+
   spokes = { for spoke in var.spoke_peers : spoke.alias => {
     internal_ip = spoke.internal_ip
 
@@ -146,10 +148,11 @@ resource "null_resource" "address" {
   for_each = local.peers
 
   triggers = {
-    id     = each.value.id
-    ip     = each.value.internal_ip
-    prefix = var.mesh_prefix
-    iface  = var.interface
+    id       = each.value.id
+    ip       = each.value.internal_ip
+    prefix   = var.mesh_prefix
+    iface    = var.interface
+    site_ips = md5(join(",", local.site_ips))
   }
 
   connection {
@@ -172,6 +175,16 @@ resource "null_resource" "address" {
       Address=${each.value.internal_ip}/${var.mesh_prefix}
 EOC
     destination = "${var.systemd_dir}/${var.interface}.network.d/address.conf"
+  }
+
+  provisioner "file" {
+    content = join("\n\n", [for r in setsubtract(local.site_ips, toset(each.value.site_ips)) : <<EOC
+      [Route]
+      Destination=${r}
+      Scope=link
+EOC
+    ])
+    destination = "${var.systemd_dir}/${var.interface}.network.d/routes.conf"
   }
 }
 
@@ -237,6 +250,7 @@ resource "null_resource" "peers" {
     internal_ips = md5(join("", [for p in concat(values(local.peers), values(local.spokes)) : p.internal_ip]))
     keys         = md5(join("", concat([for k in null_resource.keys : k.id], [for s in local.spokes : s.public_key])))
     endpoints    = md5(join("", [for p in local.peers : p.endpoint]))
+    site_ips     = md5(join(",", local.site_ips))
   }
 
   connection {
@@ -266,7 +280,7 @@ resource "null_resource" "peers" {
     %{if !each.value.egress && peer.egress}
       AllowedIPs=0.0.0.0/0,::/0
     %{else}
-      AllowedIPs=${peer.internal_ip}/${var.mesh_prefix}
+      AllowedIPs=${peer.internal_ip}/${var.mesh_prefix},${join(",", peer.site_ips)}
     %{endif}
 
     %{endfor}

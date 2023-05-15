@@ -17,6 +17,8 @@ variable "mesh_peers" {
 
       * internal_ip: Private IP for this peer in the WireGuard network
 
+      * site_ips: List of IP addresses for this peer's site
+
       * port: Port on which WireGuard is listening, e.g. `51820`
 
       * ssh_host: Reachable address to connect to this peer over SSH
@@ -31,6 +33,7 @@ EOD
     endpoint    = string
     hostname    = string
     internal_ip = string
+    site_ips    = set(string)
     port        = number
     ssh_host    = string
     ssh_user    = string
