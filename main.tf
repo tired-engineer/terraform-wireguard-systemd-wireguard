@@ -50,7 +50,7 @@ locals {
         Name=${var.interface}
 
         [Network]
-        Address=${spoke.internal_ip}/${var.mesh_prefix}
+        Address=${spoke.internal_ip}/32
       %{for addr in spoke.dns}
         DNS=${addr}
       %{endfor}
@@ -280,7 +280,7 @@ resource "null_resource" "peers" {
     %{if !each.value.egress && peer.egress}
       AllowedIPs=0.0.0.0/0,::/0
     %{else}
-      AllowedIPs=${peer.internal_ip}/${var.mesh_prefix},${join(",", peer.site_ips)}
+      AllowedIPs=${peer.internal_ip}/32,${join(",", peer.site_ips)}
     %{endif}
 
     %{endfor}
