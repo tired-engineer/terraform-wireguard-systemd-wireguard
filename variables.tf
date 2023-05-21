@@ -79,3 +79,9 @@ variable "systemd_dir" {
   type        = string
   default     = "/etc/systemd/network"
 }
+
+variable "commands_after_restart" {
+  description = "Commands to run after Systemd networking restart after configuration change. Empty list to disable."
+  type        = list(string)
+  default     = []
+}

@@ -318,9 +318,9 @@ resource "null_resource" "wireguard" {
   }
 
   provisioner "remote-exec" {
-    inline = [
+    inline = concat([
       "set -o errexit", # https://github.com/hashicorp/terraform/issues/27554
       "systemctl restart systemd-networkd",
-    ]
+    ], var.commands_after_restart)
   }
 }
